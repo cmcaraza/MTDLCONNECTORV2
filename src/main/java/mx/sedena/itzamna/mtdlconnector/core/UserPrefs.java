@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 public final class UserPrefs {
 
     /** The Constant PROPS_FILE. */
-    private static final String PROPS_FILE = "settings/AEW-C4I.props.xml";
+    private static final String PROPS_FILE = "/cmcasharepointclient/cmcasettings/AEW-C4I.props.xml";
 
     /** The log. */
     private static Logger log = Logger.getLogger(UserPrefs.class);
@@ -52,6 +52,9 @@ public final class UserPrefs {
 
     /** The Constant LINK_ID. */
     public static final String LINK_ID = "link.participant_id";
+
+    /** The Constant LINK_REMOTE_ID. */
+    public static final String LINK_REMOTE_ID = "link.remote_participant_id";
 
     /** The Constant PASSWORD. */
     public static final String PASSWORD = "link.password";

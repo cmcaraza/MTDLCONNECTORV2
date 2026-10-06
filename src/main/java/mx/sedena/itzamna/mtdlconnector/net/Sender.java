@@ -40,54 +40,93 @@ class Sender implements Runnable {
     private static TimerTask sendFrameTask = null;
     private static TimerTask heartBeatTask = null;
     private static TimerTask linkStatusRequestTask = null;
+    private static TimerTask loginRetryTask = null;
+
 
     private Sender() {}
 
     public static void start() {
+
         sender = new Thread(new Sender());
+
         sender.start();
+
+        loginRetryTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (Network.isConnected() && !Network.isLoggedIn()){
+                    String miId = ConfigManager.getInstance().getParticipantId();
+                    LinkParticipantType me = LinkParticipantType.valueOf(miId);
+                    String remoteT = UserPrefs.getProps().getProperty(UserPrefs.LINK_REMOTE_ID);
+                    LinkParticipantType remoteTarget = LinkParticipantType.valueOf(remoteT.toUpperCase());
+                    System.out.println("[TX - HANDSHAKE] -> Solicitando/Reintentando LOGIN al nodo: " + remoteTarget);
+                    MessageHeader loginHeader = new MessageHeader(MessageType.LOGIN, remoteTarget, me);
+                    Login loginMsg = new Login(loginHeader);
+                    loginMsg.setPassword(UserPrefs.getProps().getProperty(UserPrefs.PASSWORD));
+                    queue.add(new DelayableMessage(loginMsg));
+                }
+            }
+        };
+        // Inicia de inmediato (0ms) y repite cada 3000ms
+        Network.TIMER.scheduleAtFixedRate(loginRetryTask, 0, 3000);
 
         sendFrameTask = new TimerTask() {
             @Override
             public void run() {
-                if (Network.isConnected() && (frameMessageBuffer.size() > 0) && Network.isLoggedIn()) {
+                if(Network.isConnected() && (frameMessageBuffer.size() > 0) && Network.isLoggedIn()){
+
                     sendFrame(new Frame(assembleMessages(), (byte) getFrameSeqNo()));
                 }
             }
         };
+
         Network.TIMER.scheduleAtFixedRate(sendFrameTask, 100, 100);
+
 
         heartBeatTask = new TimerTask() {
             @Override
             public void run() {
-                if (Network.isConnected() && Network.isSendHeartbeats() && Network.isLoggedIn()) {
-                    // PASO 3: Validar envío de Heartbeat
+                //TO DO: @ZOPILOMAN AQUI DEBES PONER LA LOGICA PARA INSERTAR EN DB EL HB CONNECTORS
+
+                if (Network.isConnected()){
                     String miId = ConfigManager.getInstance().getParticipantId();
                     System.out.println("[TX - HEARTBEAT] -> Emitiendo latido táctico como: " + miId);
 
-                    LinkParticipantType me = LinkParticipantType.valueOf(miId);
+                    LinkParticipantType me =  LinkParticipantType.valueOf(miId);
                     MessageType hb = (me == LinkParticipantType.C4I) ? MessageType.C4I_HEARTBEAT : MessageType.AEW_HEARTBEAT;
-                    MessageHeader mh = new MessageHeader(hb, Network.getDestinationLinkParticipant(), me);
+                    LinkParticipantType target = Network.getDestinationLinkParticipant();
+
+                    if( target == null){
+                        target = LinkParticipantType.valueOf(UserPrefs.getProps().getProperty(UserPrefs.LINK_REMOTE_ID));
+                    }
+
+                    MessageHeader mh = new MessageHeader(hb, target, me);
                     queue.add(new DelayableMessage(mh.getMessage()));
                 }
+
             }
         };
-        Network.TIMER.scheduleAtFixedRate(heartBeatTask, 2000, 2000);
+
+        Network.TIMER.scheduleAtFixedRate(heartBeatTask, 2000,2000);
 
         linkStatusRequestTask = new TimerTask() {
             @Override
             public void run() {
-                if (Network.isConnected() && Network.isSendLinkStatusRequest() && Network.isLoggedIn()) {
+
+                if(Network.isConnected() && Network.isSendLinkStatusRequest() && Network.isLoggedIn()){
+
                     LinkParticipantType me = LinkParticipantType.valueOf(ConfigManager.getInstance().getParticipantId());
                     MessageHeader mh = new MessageHeader(MessageType.LINK_STATUS_REQUEST, Network.getDestinationLinkParticipant(), me);
                     queue.add(new DelayableMessage(mh.getMessage()));
                 }
             }
         };
-        Network.TIMER.scheduleAtFixedRate(linkStatusRequestTask, 60000, 60000);
+
+        Network.TIMER.scheduleAtFixedRate(linkStatusRequestTask,60000, 60000);
     }
 
     public static void stop() {
+        if(loginRetryTask != null) loginRetryTask.cancel();
         if(sendFrameTask != null) sendFrameTask.cancel();
         if(heartBeatTask != null) heartBeatTask.cancel();
         if(linkStatusRequestTask != null) linkStatusRequestTask.cancel();

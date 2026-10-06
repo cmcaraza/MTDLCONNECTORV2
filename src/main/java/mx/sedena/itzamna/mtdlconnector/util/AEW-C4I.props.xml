@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!DOCTYPE properties SYSTEM 'http://java.sun.com/dtd/properties.dtd'>
+<properties>
+ <comment>AEW-C4I Simulator Properties</comment>
+ <entry key="freq.heartbeat.millis">2000</entry>
+ <entry key="address.remote.ip">192.168.1.242</entry>
+ <entry key="address.local.port">6666</entry>
+ <entry key="frame.max_message_count">10</entry>
+ <entry key="frame.message_window.millis">100</entry>
+ <entry key="link.participant_id">MP1</entry>
+ <entry key="heartbeat.timeout">30000</entry>
+ <entry key="address.local.ip">192.168.1.68</entry>
+ <entry key="freq.extrapolate.millis">2000</entry>
+ <entry key="link.password">DATA</entry>
+ <entry key="address.remote.port">6666</entry>
+ <entry key="freq.link_status.millis">60000</entry>
+ <entry key="link.remote_participant_id">C4I</entry>
+</properties>

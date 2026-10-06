@@ -115,17 +115,22 @@ public class Network {
          */
         public static void schedule() {
             cancel();
+
             task = new TimerTask() {
                 @Override
                 public void run() {
-                    if (isRequireHeartbeats()) {
-                        log.debug("Heartbeat timeout.");
-                        Network.disconnect();
+
+                    if (isRequireHeartbeats()){
+                        log.warn("Heartbeat timeout detectado. Se perdió la comunicación con el corresponsal.");
+
+                        System.out.println("[ALERTA - RED] Se perdió el Heartbeat del simulador. Reiniciando estado de sesión...");
+                        setLoggedIn(false);
+                        setDestinationLinkParticipant(null);
                     }
                 }
             };
-            int millis = Integer.valueOf(props.getProperty(
-                    UserPrefs.HEARTBEAT_TIMEOUT, "30000"));
+
+            int millis = Integer.valueOf(props.getProperty(UserPrefs.HEARTBEAT_TIMEOUT, "10000")); // Recomendado: 10 a 15 segundos
             TIMER.schedule(task, millis);
         }
 

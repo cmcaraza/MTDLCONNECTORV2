@@ -30,6 +30,7 @@ class Receiver implements Runnable {
     private static Logger log = Logger.getLogger(Receiver.class);
     private static Thread receiver = null;
     private static DatagramSocket socket = null;
+    private static L3TrackClassType trackIdentity;
 
     private Receiver() {}
 
@@ -94,13 +95,24 @@ class Receiver implements Runnable {
                                     System.out.println("   -> ID Pista : " + track.getTrackNumber());
                                     System.out.println("   -> Posición : Lat " + track.getLatitudeDegrees() + " | Lon " + track.getLongitudeDegrees());
                                     System.out.println("   -> Alt / Vel: " + track.getAltitude() + " ft | " + track.getSpeed() + " nudos");
-                                    System.out.println("   -> Identidad: " + new String(track.getIdentity()).trim());
+                                    System.out.println("   -> Angle: " + track.getAngleDegrees() + " grados");
+                                    // Obtener la clasificación táctica (Enum)
+                                    System.out.println("   -> Clasificación byte: " + track.getTrkClass());
+                                    System.out.println("   -> Clasificación STRING: " + track.getTrackClassType().toString());
+                                    // Obtener el Callsign/Identificador de 9 bytes
+                                    System.out.println("   -> Identificador (Callsign): " + new String(track.getIdentity()).trim());
 
                                 } else if (m instanceof C4ITrackData) {
                                     C4ITrackData c4i = (C4ITrackData) m;
                                     System.out.println("\n[RX - TRAZA C4I DECODIFICADA]");
                                     System.out.println("   -> ID Pista : " + c4i.getTrackNumber());
                                     System.out.println("   -> Posición : Lat " + c4i.getLatitudeDegrees() + " | Lon " + c4i.getLongitudeDegrees());
+                                    System.out.println("   -> Alt / Vel: " + c4i.getAltitude() + " ft | " + c4i.getSpeed() + " nudos");
+                                    System.out.println("   -> Angle: " + c4i.getAngleDegrees() + " grados");
+                                    // C4ITrackData devuelve directamente un String resolviendo si es L3 o Ericsson internamente
+                                    System.out.println("   -> Clasificación: " + c4i.getTrackClassType());
+                                    System.out.println("   -> Identificador (Callsign): " + new String(c4i.getIdentity()).trim());
+
                                 }
 
                                 handleMessage(m);
@@ -117,6 +129,8 @@ class Receiver implements Runnable {
     }
 
     private void handleMessage(Message m) {
+
+
         LinkParticipantType source = m.getHeader().getSourceType();
         LinkParticipantType destination = m.getHeader().getDestinationType();
         Network.setDestinationLinkParticipant(source);
@@ -130,7 +144,9 @@ class Receiver implements Runnable {
                     System.out.println("[RX - HANDSHAKE] <- Petición de LOGIN recibida desde: " + source);
                     Network.setLoggedIn(true);
                     Network.HeartbeatTimeout.schedule();
+
                     if (Network.isSendLoginResponse()) {
+
                         System.out.println("[TX - HANDSHAKE] -> Respondiendo LOGIN_RESPONSE (Aceptado)");
                         MessageHeader header = new MessageHeader(MessageType.LOGIN_RESPONSE, source, me);
                         LoginResponse lr = new LoginResponse(header);
@@ -147,7 +163,13 @@ class Receiver implements Runnable {
                     break;
                 case C4I_HEARTBEAT:
                 case AEW_HEARTBEAT:
+
                     System.out.println("[RX - HEARTBEAT] <- Latido recibido del corresponsal: " + source);
+                    // Si recibimos un latido pero no estábamos "logueados", forzamos el alta.
+                    if (!Network.isLoggedIn()) {
+                        System.out.println("[INFO] Conexión tardía detectada vía Heartbeat.");
+                        Network.setLoggedIn(true);
+                    }
                     Network.HeartbeatTimeout.schedule();
                     break;
                 case LINK_STATUS_REQUEST:

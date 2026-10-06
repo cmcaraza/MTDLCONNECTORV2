@@ -129,6 +129,8 @@ class Receiver implements Runnable {
     }
 
     private void handleMessage(Message m) {
+
+
         LinkParticipantType source = m.getHeader().getSourceType();
         LinkParticipantType destination = m.getHeader().getDestinationType();
         Network.setDestinationLinkParticipant(source);
@@ -142,7 +144,9 @@ class Receiver implements Runnable {
                     System.out.println("[RX - HANDSHAKE] <- Petición de LOGIN recibida desde: " + source);
                     Network.setLoggedIn(true);
                     Network.HeartbeatTimeout.schedule();
+
                     if (Network.isSendLoginResponse()) {
+
                         System.out.println("[TX - HANDSHAKE] -> Respondiendo LOGIN_RESPONSE (Aceptado)");
                         MessageHeader header = new MessageHeader(MessageType.LOGIN_RESPONSE, source, me);
                         LoginResponse lr = new LoginResponse(header);

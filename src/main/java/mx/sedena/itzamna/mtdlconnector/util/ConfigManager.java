@@ -29,10 +29,12 @@ public class ConfigManager {
 
     // Variables de Red MTDL
     private String mtdl_LocalIp;
-    private  String mtdlRemoteIp;
+    private String mtdlRemoteIp;
     private int mtdl_LocalPort;
     private int mtdl_RemotePort;
     private String mtdlNetInterface;
+    private String participantId;
+    private String linkPassword;
 
     private ConfigManager() {
         loadConfig();
@@ -47,7 +49,7 @@ public class ConfigManager {
 
     private void loadConfig() {
         try {
-            File xmlFile = new File("/cmcasharepointclient/settings/cmca_config.xml");
+            File xmlFile = new File("/cmcasharepointclient/cmcasettings/cmca_config.xml");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(xmlFile);
@@ -60,14 +62,22 @@ public class ConfigManager {
             this.dbPass = getTextValue(doc, "PASS", "password");
             this.dbPort = getTextValue(doc, "PORT", "portnumber");
 
-            // Extracción de parámetros del nuevo bloque MTDL
-            this.mtdl_LocalIp = getTextValue(doc, "MTDL", "ip");
+            // Bloque MTDL - Lectura de Cadenas de Texto
+            this.mtdl_LocalIp = getTextValue(doc, "MTDL", "ip_local");
+            this.mtdlRemoteIp = getTextValue(doc, "MTDL", "ip_remoto");
             this.mtdlNetInterface = getTextValue(doc, "MTDL", "net_interface");
+            this.participantId = getTextValue(doc, "MTDL", "participant_id");
+            this.linkPassword = getTextValue(doc, "MTDL", "password");
 
-            // Parseo seguro del puerto
-            String portStr = getTextValue(doc, "MTDL", "puerto");
-            if (!portStr.isEmpty()) {
-                this.mtdl_LocalPort = Integer.parseInt(portStr);
+            // MODIFICACIÓN: Parseo seguro para evitar caídas (NumberFormatException) si el XML viene vacío
+            String pLocal = getTextValue(doc, "MTDL", "puerto_local");
+            if (!pLocal.isEmpty()) {
+                this.mtdl_LocalPort = Integer.parseInt(pLocal);
+            }
+
+            String pRemoto = getTextValue(doc, "MTDL", "puerto_remoto");
+            if (!pRemoto.isEmpty()) {
+                this.mtdl_RemotePort = Integer.parseInt(pRemoto);
             }
 
         } catch (Exception e) {
@@ -78,7 +88,10 @@ public class ConfigManager {
     private String getTextValue(Document doc, String parentTag, String childTag) {
         Element parent = (Element) doc.getElementsByTagName(parentTag).item(0);
         if (parent != null) {
-            return parent.getElementsByTagName(childTag).item(0).getTextContent();
+            Element child = (Element) parent.getElementsByTagName(childTag).item(0);
+            if (child != null) {
+                return child.getTextContent();
+            }
         }
         return "";
     }
@@ -92,9 +105,10 @@ public class ConfigManager {
 
     // Getters para la Red MTDL
     public String getMtdl_LocalIp()     { return mtdl_LocalIp; }
-    public String getMtdlRemoteIp()     { return  mtdlRemoteIp; }
+    public String getMtdlRemoteIp()     { return mtdlRemoteIp; }
     public int getMtdl_LocalPort()      { return mtdl_LocalPort; }
-    public  int getMtdl_RemotePort()    { return mtdl_RemotePort; }
+    public int getMtdl_RemotePort()     { return mtdl_RemotePort; }
     public String getMtdlNetInterface() { return mtdlNetInterface; }
-
+    public String getParticipantId()    { return participantId; }
+    public String getLinkPassword()     { return linkPassword; }
 }

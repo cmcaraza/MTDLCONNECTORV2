@@ -22,7 +22,6 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.table.AbstractTableModel;
 
 import org.apache.log4j.Logger;
 
@@ -105,125 +104,7 @@ public class Network {
     /** The destination link participant. */
     private static LinkParticipantType destinationLinkParticipant = null;
 
-    /**
-     * The Class TrafficStatistics.
-     */
-    @SuppressWarnings("serial")
-    public static class TrafficStatistics extends AbstractTableModel {
 
-        /** The Constant SENT. */
-        private static final int SENT = 0;
-
-        /** The Constant RECEIVED. */
-        private static final int RECEIVED = 1;
-
-        /**
-         * The Enum COLUMN_NAMES.
-         */
-        private static enum COLUMN_NAMES {
-
-            /** The message. */
-            MESSAGE,
-
-            /** The sent. */
-            SENT,
-
-            /** The received. */
-            RECEIVED
-        };
-
-        /** The stats. */
-        private Hashtable<MessageType, int[]> stats = new Hashtable<MessageType, int[]>();
-
-        /**
-         * Instantiates a new traffic statistics.
-         */
-        private TrafficStatistics() {
-            for (MessageType m : MessageType.values()) {
-                stats.put(m, new int[] { 0, 0 });
-            }
-        }
-
-        /**
-         * Sent.
-         *
-         * @param m
-         *           the m
-         */
-        void sent(MessageType m) {
-            stats.get(m)[SENT]++;
-            fireTableDataChanged();
-        }
-
-        /**
-         * Received.
-         *
-         * @param m
-         *           the m
-         */
-        void received(MessageType m) {
-            stats.get(m)[RECEIVED]++;
-            fireTableDataChanged();
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see javax.swing.table.TableModel#getColumnCount()
-         */
-        @Override
-        public int getColumnCount() {
-            return COLUMN_NAMES.values().length;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see javax.swing.table.TableModel#getRowCount()
-         */
-        @Override
-        public int getRowCount() {
-            return MessageType.values().length;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see javax.swing.table.TableModel#getValueAt(int, int)
-         */
-        @Override
-        public Object getValueAt(int row, int col) {
-            switch (COLUMN_NAMES.values()[col]) {
-                case MESSAGE:
-                    return MessageType.values()[row];
-                case SENT:
-                    return stats.get(MessageType.values()[row])[SENT];
-                case RECEIVED:
-                    return stats.get(MessageType.values()[row])[RECEIVED];
-                default:
-                    return null;
-            }
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see javax.swing.table.AbstractTableModel#getColumnName(int)
-         */
-        @Override
-        public String getColumnName(int column) {
-            return COLUMN_NAMES.values()[column].toString();
-        }
-
-    }
-
-    /** The Constant TRAFFIC_STATS. */
-    public static final TrafficStatistics TRAFFIC_STATS = new TrafficStatistics();
-
-    /**
-     * A heartbeat timer that runs when heartbeat timeout checking is chosen by
-     * the user.
-     */
     static class HeartbeatTimeout {
 
         /** Heartbeat task. */
